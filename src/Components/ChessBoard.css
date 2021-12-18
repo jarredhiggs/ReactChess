@@ -1,0 +1,14 @@
+#chessboard {
+    position: absolute;
+    border: 5px solid white;
+    resize: none;
+    user-select: none;
+}
+
+.tile {
+    position: absolute;
+    width:100px;
+    height:100px;
+    text-align: center;
+    color: black;
+}
