@@ -1,6 +1,10 @@
 import React from 'react'
+
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+
 import './ChessBoard.css'
-import { boardDefaultProps } from './chessboard-defaults'
+import { boardDefaultProps } from './chessboard-constants'
 
 import {
     king, queen, bishop, rook, knight, pawn,
@@ -39,18 +43,20 @@ class ChessBoard extends React.Component {
 
     render() {
         return (
-            <div id="chessboard"
-                onDragOver={(e) => this.onDragOver(e)}
-                style={
-                    {
-                        'left': this.state.left,
-                        'top': this.state.top,
-                        'width': this.state.boardSize[0],
-                        'height': this.state.boardSize[1]
-                    }
-                }>
-                {this.state.squares}
-            </div>
+            <DndProvider backend={HTML5Backend}>
+                <div id="chessboard"
+                    onDragOver={(e) => this.onDragOver(e)}
+                    style={
+                        {
+                            'left': this.state.left,
+                            'top': this.state.top,
+                            'width': this.state.boardSize[0],
+                            'height': this.state.boardSize[1]
+                        }
+                    }>
+                    {this.state.squares}
+                </div>
+            </DndProvider>
         );
     }
 
@@ -78,7 +84,7 @@ class ChessBoard extends React.Component {
 
                 let piece
                 if (pieces[pieceIndex]) {
-                    piece = <Piece icon={pieces[pieceIndex]} />
+                    piece = <Piece id={colorParity} icon={pieces[pieceIndex]} />
                 } else {
                     piece = null
                 }
@@ -111,4 +117,4 @@ class ChessBoard extends React.Component {
 
 ChessBoard.defaultProps = boardDefaultProps
 
-export default ChessBoard;
+export default ChessBoard

@@ -10,7 +10,7 @@ export const boardDefaultProps = {
     // Square/Tile properties
     lightColor: 'rgb(240, 200, 200)',
     darkColor: 'rgb(70, 20, 20)',
-    squareSize: 100,
-
-
+    squareSize: 100
 }
+
+export const pieceDragType = "drag_piece"
