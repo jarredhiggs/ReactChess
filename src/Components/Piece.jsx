@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { DragSource } from 'react-dnd'
+import { DragSource, DragPreviewImage } from 'react-dnd'
 
 import { pieceDragType } from './chessboard-constants'
 
@@ -10,12 +10,19 @@ class Piece extends React.Component {
         this.state = {
             id: props.id,
             icon: props.icon,
+            boardCallback: props.boardCallback
+        }
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+            id: nextProps.id,
+            icon: nextProps.icon
         }
     }
 
     render() {
-
-        const { connectDragSource, isDragging } = this.props
+        const { connectDragSource } = this.props
 
         return connectDragSource(
             <div className="piece">
@@ -28,7 +35,11 @@ class Piece extends React.Component {
 const pieceDragContract = {
 
     beginDrag(props) {
-        return { id: props.id }
+        props.boardCallback(props.id)
+        return {
+            dragId: props.id,
+            dragIcon: props.icon
+        }
     },
 
     endDrag(props, monitor, component) {

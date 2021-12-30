@@ -8,19 +8,27 @@ class Tile extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            id: props.id,
             size: props.size,
             position: props.position,
             color: props.color,
             piece: props.piece,
+            boardClickCallback: props.clickCallback
+        }
+
+        console.log(this.props.color)
+        this.handleClickEvent = this.handleClickEvent.bind(this)
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+            color: nextProps.color,
+            piece: nextProps.piece
         }
     }
 
-    componentDidUpdate(prevProps) {
-    }
-
-
     render() {
-        const { canDrop, isOver, connectDropTarget } = this.props
+        const { dropResult, connectDropTarget } = this.props
 
         let style = {
             'left': this.state.position.x,
@@ -29,25 +37,29 @@ class Tile extends React.Component {
         }
 
         return connectDropTarget(
-            <div className="tile" style={style}>
+            <div ref={this.ref}
+                className="tile"
+                style={style}
+                onClick={this.handleClickEvent}>
                 {this.state.piece}
             </div>
         );
     }
-}
 
-const tileDropTargetContract = {
-    canDrop(props, monitor) {
-        return true
+    handleClickEvent() {
+        this.state.boardClickCallback(this.state.id, false)
     }
 }
 
-const tileDropCollect = (collect, monitor) => {
+const tileDropTargetContract = {
+    drop(props, monitor, component) {
+        props.clickCallback(props.id)
+    }
+}
+
+const tileDropCollect = (connect, monitor) => {
     return {
-        connectDropTarget: collect.dropTarget(),
-        isOver: monitor.isOver(),
-        canDrop: monitor.canDrop(),
-        itemType: monitor.getItemType()
+        connectDropTarget: connect.dropTarget(),
     }
 }
 

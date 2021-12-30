@@ -4,12 +4,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
 import './ChessBoard.css'
-import { boardDefaultProps } from './chessboard-constants'
-
-import {
-    king, queen, bishop, rook, knight, pawn,
-    king2, queen2, bishop2, rook2, knight2, pawn2
-} from "../res/"
+import { boardDefaultProps, startPieces } from './chessboard-constants'
 
 import Piece from "./Piece"
 import Tile from './Tile'
@@ -23,8 +18,13 @@ class ChessBoard extends React.Component {
             squareSize: props.squareSize,
             boardSize: [props.squareSize * 8, props.squareSize * 8],
             left: '50px',
-            top: '50px'
+            top: '50px',
+            pieces: startPieces,
+            squares: [],
+            highlighted: props.highlighted
         };
+
+        this.handleTileInteract = this.handleTileInteract.bind(this)
     }
 
     componentDidMount() {
@@ -62,18 +62,8 @@ class ChessBoard extends React.Component {
 
     createTiles() {
         let squares = []
-        let size = this.state.squareSize;
-        let pieces = [
-            rook2, knight2, bishop2, queen2, king2, bishop2, knight2, rook2,
-            pawn2, pawn2, pawn2, pawn2, pawn2, pawn2, pawn2, pawn2,
-            null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null,
-            pawn, pawn, pawn, pawn, pawn, pawn, pawn, pawn,
-            rook, knight, bishop, queen, king, bishop, knight, rook
-        ]
-        let pieceIndex = 0
+        let size = this.state.squareSize
+        let pieces = this.state.pieces
         let colorParity = 0
         for (let rank = 0; rank < 8; rank++) {
             for (let file = 0; file < 8; file++) {
@@ -83,8 +73,12 @@ class ChessBoard extends React.Component {
                 }
 
                 let piece
-                if (pieces[pieceIndex]) {
-                    piece = <Piece id={colorParity} icon={pieces[pieceIndex]} />
+                if (pieces[file + (rank * 8)]) {
+                    piece = <Piece
+                        id={file + (rank * 8)}
+                        icon={pieces[file + (rank * 8)]}
+                        boardCallback={this.handleTileInteract}
+                    />
                 } else {
                     piece = null
                 }
@@ -92,14 +86,16 @@ class ChessBoard extends React.Component {
                 squares.push(
                     <Tile
                         key={'tile' + colorParity}
-                        color={this.state.colors[colorParity % 2]}
+                        id={file + (rank * 8)}
+                        color={(this.state.highlighted == file + (rank * 8)) ?
+                            'rgb(70,70,200)' : this.state.colors[colorParity % 2]}
                         size={size}
                         position={position}
                         piece={piece}
+                        clickCallback={this.handleTileInteract}
                     />
                 );
                 colorParity++;
-                pieceIndex++;
             }
             colorParity++;
         }
@@ -112,6 +108,38 @@ class ChessBoard extends React.Component {
             event.pageX < (50 + (this.state.boardSize[0])) &&
             event.pageY > 50 &&
             event.pageY < (50 + (this.state.boardSize[1])))
+    }
+
+    handleTileInteract(tileId, isDragging = false) {
+        this.handleTileClick(tileId)
+    }
+
+    handleTileClick(tileId) {
+        if (!this.state.highlighted &&
+            this.state.highlighted !== 0) {
+            if (this.state.pieces[tileId] === null) {
+                return
+            }
+            this.setState({ highlighted: tileId },
+                () => {
+                    this.createTiles()
+                })
+        } else {
+            this.movePiece(this.state.highlighted, tileId)
+        }
+
+    }
+
+    movePiece(fromTileId, toTileId) {
+        let pieces = this.state.pieces
+        let fromPiece = pieces[fromTileId]
+        pieces[fromTileId] = null
+        pieces[toTileId] = fromPiece
+
+        this.setState({ highlighted: null, pieces: pieces },
+            () => {
+                this.createTiles()
+            })
     }
 }
 
