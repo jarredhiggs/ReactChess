@@ -1,37 +1,41 @@
 import React from 'react'
 
+import ConsoleLog from '../util/ConsoleLog'
+
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
 import './ChessBoard.css'
-import { boardDefaultProps, startPieces } from './chessboard-constants'
+import { boardDefaultProps, ChessContext, coordsToNotation } from './chessboard-constants'
 
 import Piece from "./Piece"
 import Tile from './Tile'
 
 class ChessBoard extends React.Component {
 
-    constructor(props) {
-        super(props);
+    static contextType = ChessContext
+
+    constructor(props, context) {
+        super(props, context);
+
         this.state = {
             colors: [props.lightColor, props.darkColor],
             squareSize: props.squareSize,
             boardSize: [props.squareSize * 8, props.squareSize * 8],
-            left: '50px',
-            top: '50px',
-            pieces: startPieces,
-            squares: [],
-            highlighted: props.highlighted
+            left: props.left,
+            top: props.top,
+            highlighted: props.highlighted,
+            highlightColor: props.highlightColor,
         };
 
         this.handleTileInteract = this.handleTileInteract.bind(this)
     }
 
     componentDidMount() {
-        this.createTiles()
+        this.createTiles(this.context.game.board)
 
         document.addEventListener("contextmenu", (event) => {
-            if (this.eventIsOverBoard(event)) {
+            if (this.node.contains(event.target)) {
                 event.preventDefault();
             }
         });
@@ -43,9 +47,10 @@ class ChessBoard extends React.Component {
 
     render() {
         return (
-            <DndProvider backend={HTML5Backend}>
+            <DndProvider backend={HTML5Backend} >
                 <div id="chessboard"
                     onDragOver={(e) => this.onDragOver(e)}
+                    ref={node => this.node = node}
                     style={
                         {
                             'left': this.state.left,
@@ -54,16 +59,15 @@ class ChessBoard extends React.Component {
                             'height': this.state.boardSize[1]
                         }
                     }>
-                    {this.state.squares}
+                    {this.createTiles(this.context.game.board)}
                 </div>
             </DndProvider>
         );
     }
 
-    createTiles() {
+    createTiles(pieces) {
         let squares = []
         let size = this.state.squareSize
-        let pieces = this.state.pieces
         let colorParity = 0
         for (let rank = 0; rank < 8; rank++) {
             for (let file = 0; file < 8; file++) {
@@ -72,11 +76,14 @@ class ChessBoard extends React.Component {
                     y: rank * size
                 }
 
-                let piece
-                if (pieces[file + (rank * 8)]) {
+                let notation = coordsToNotation({ row: rank, col: file })
+
+                let piece = pieces[rank][file]
+
+                if (piece !== null) {
                     piece = <Piece
-                        id={file + (rank * 8)}
-                        icon={pieces[file + (rank * 8)]}
+                        id={notation}
+                        icon={piece.icon}
                         boardCallback={this.handleTileInteract}
                     />
                 } else {
@@ -85,10 +92,13 @@ class ChessBoard extends React.Component {
 
                 squares.push(
                     <Tile
-                        key={'tile' + colorParity}
-                        id={file + (rank * 8)}
-                        color={(this.state.highlighted == file + (rank * 8)) ?
-                            'rgb(70,70,200)' : this.state.colors[colorParity % 2]}
+                        key={'tile' + notation}
+                        id={notation}
+                        color={
+                            (this.state.highlighted ==
+                                notation) ?
+                                this.state.highlightColor : this.state.colors[colorParity % 2]
+                        }
                         size={size}
                         position={position}
                         piece={piece}
@@ -99,47 +109,42 @@ class ChessBoard extends React.Component {
             }
             colorParity++;
         }
-        this.setState({ squares: squares },
-            () => console.log("createTiles() complete"));
+        ConsoleLog("createTiles() complete");
+        return squares
     }
 
-    eventIsOverBoard(event) {
-        return (event.pageX > 50 &&
-            event.pageX < (50 + (this.state.boardSize[0])) &&
-            event.pageY > 50 &&
-            event.pageY < (50 + (this.state.boardSize[1])))
+    handleTileInteract(notation) {
+        this.handleSquareClick(notation)
     }
 
-    handleTileInteract(tileId, isDragging = false) {
-        this.handleTileClick(tileId)
-    }
-
-    handleTileClick(tileId) {
-        if (!this.state.highlighted &&
-            this.state.highlighted !== 0) {
-            if (this.state.pieces[tileId] === null) {
+    handleSquareClick(notation) {
+        // If no square is highlighted
+        if (!this.state.highlighted) {
+            // If user has clicked empty square
+            if (this.context.game.pieceAt(notation) === null) {
                 return
             }
-            this.setState({ highlighted: tileId },
-                () => {
-                    this.createTiles()
-                })
-        } else {
-            this.movePiece(this.state.highlighted, tileId)
-        }
 
+            console.log(this.context.game.validMoves(notation))
+
+            //TODO: Change so that only highlighted tile is rerendered, rather than entire board
+            //Sets highlighted square and re-render
+            this.setState({ highlighted: notation })
+
+            // If square is already highlighted
+        } else {
+            //If user is clicking the same square
+            if (this.state.highlighted != notation) {
+                this.movePiece(this.state.highlighted, notation)
+            }
+
+            this.setState({ highlighted: null })
+        }
     }
 
-    movePiece(fromTileId, toTileId) {
-        let pieces = this.state.pieces
-        let fromPiece = pieces[fromTileId]
-        pieces[fromTileId] = null
-        pieces[toTileId] = fromPiece
-
-        this.setState({ highlighted: null, pieces: pieces },
-            () => {
-                this.createTiles()
-            })
+    movePiece(fromCoords, toCoords) {
+        this.context.game.move(fromCoords, toCoords)
+        this.forceUpdate()
     }
 }
 

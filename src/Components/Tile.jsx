@@ -15,8 +15,7 @@ class Tile extends React.Component {
             piece: props.piece,
             boardClickCallback: props.clickCallback
         }
-
-        console.log(this.props.color)
+        
         this.handleClickEvent = this.handleClickEvent.bind(this)
     }
 
@@ -47,7 +46,7 @@ class Tile extends React.Component {
     }
 
     handleClickEvent() {
-        this.state.boardClickCallback(this.state.id, false)
+        this.state.boardClickCallback(this.state.id)
     }
 }
 
