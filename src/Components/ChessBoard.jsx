@@ -26,6 +26,8 @@ class ChessBoard extends React.Component {
             top: props.top,
             highlighted: props.highlighted,
             highlightColor: props.highlightColor,
+            validHighlighted: props.validHighlighted,
+            validHighlightColor: props.validHighlightColor
         };
 
         this.handleTileInteract = this.handleTileInteract.bind(this)
@@ -50,7 +52,7 @@ class ChessBoard extends React.Component {
             <DndProvider backend={HTML5Backend} >
                 <div id="chessboard"
                     onDragOver={(e) => this.onDragOver(e)}
-                    ref={node => this.node = node}
+                    ref={(node) => this.node = node}
                     style={
                         {
                             'left': this.state.left,
@@ -90,15 +92,20 @@ class ChessBoard extends React.Component {
                     piece = null
                 }
 
+                let currentColor
+                if (this.state.highlighted == notation) {
+                    currentColor = this.state.highlightColor
+                } else if (this.state.validHighlighted.includes(notation)) {
+                    currentColor = this.state.validHighlightColor
+                } else {
+                    currentColor = this.state.colors[colorParity % 2]
+                }
+
                 squares.push(
                     <Tile
                         key={'tile' + notation}
                         id={notation}
-                        color={
-                            (this.state.highlighted ==
-                                notation) ?
-                                this.state.highlightColor : this.state.colors[colorParity % 2]
-                        }
+                        color={currentColor}
                         size={size}
                         position={position}
                         piece={piece}
@@ -109,7 +116,6 @@ class ChessBoard extends React.Component {
             }
             colorParity++;
         }
-        ConsoleLog("createTiles() complete");
         return squares
     }
 
@@ -124,12 +130,12 @@ class ChessBoard extends React.Component {
             if (this.context.game.pieceAt(notation) === null) {
                 return
             }
-
-            console.log(this.context.game.validMoves(notation))
-
             //TODO: Change so that only highlighted tile is rerendered, rather than entire board
             //Sets highlighted square and re-render
-            this.setState({ highlighted: notation })
+            this.setState({
+                highlighted: notation,
+                validHighlighted: this.context.game.validMoves(notation)
+            })
 
             // If square is already highlighted
         } else {
@@ -137,8 +143,8 @@ class ChessBoard extends React.Component {
             if (this.state.highlighted != notation) {
                 this.movePiece(this.state.highlighted, notation)
             }
-
-            this.setState({ highlighted: null })
+            this.setState({ highlighted: null,
+            validHighlighted: [] })
         }
     }
 

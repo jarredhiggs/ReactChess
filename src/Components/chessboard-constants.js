@@ -59,6 +59,8 @@ export const boardDefaultProps = {
     left: '50px',
     top: '50px',
     highlightColor: 'rgb(70, 70, 200)',
+    validHighlightColor: 'rgb(255, 255, 0)',
+    validHighlighted: [],
     pieces: startPieces
 }
 
