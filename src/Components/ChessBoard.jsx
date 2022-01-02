@@ -16,7 +16,7 @@ class ChessBoard extends React.Component {
     static contextType = ChessContext
 
     constructor(props, context) {
-        super(props, context);
+        super(props);
 
         this.state = {
             colors: [props.lightColor, props.darkColor],
@@ -27,14 +27,18 @@ class ChessBoard extends React.Component {
             highlighted: props.highlighted,
             highlightColor: props.highlightColor,
             validHighlighted: props.validHighlighted,
-            validHighlightColor: props.validHighlightColor
+            validHighlightColors: [
+                props.validHighlightColorLight,
+                props.validHighlightColorDark
+            ]
+
         };
 
         this.handleTileInteract = this.handleTileInteract.bind(this)
     }
 
     componentDidMount() {
-        this.createTiles(this.context.game.board)
+        this.createTiles(this.context.game.getBoard())
 
         document.addEventListener("contextmenu", (event) => {
             if (this.node.contains(event.target)) {
@@ -61,7 +65,7 @@ class ChessBoard extends React.Component {
                             'height': this.state.boardSize[1]
                         }
                     }>
-                    {this.createTiles(this.context.game.board)}
+                    {this.createTiles(this.context.game.getBoard())}
                 </div>
             </DndProvider>
         );
@@ -96,7 +100,7 @@ class ChessBoard extends React.Component {
                 if (this.state.highlighted == notation) {
                     currentColor = this.state.highlightColor
                 } else if (this.state.validHighlighted.includes(notation)) {
-                    currentColor = this.state.validHighlightColor
+                    currentColor = this.state.validHighlightColors[colorParity % 2]
                 } else {
                     currentColor = this.state.colors[colorParity % 2]
                 }
@@ -143,8 +147,10 @@ class ChessBoard extends React.Component {
             if (this.state.highlighted != notation) {
                 this.movePiece(this.state.highlighted, notation)
             }
-            this.setState({ highlighted: null,
-            validHighlighted: [] })
+            this.setState({
+                highlighted: null,
+                validHighlighted: []
+            })
         }
     }
 

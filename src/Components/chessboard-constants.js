@@ -22,16 +22,27 @@ export const PieceData = {
 }
 
 const p = PieceData
-export const startPieces = [
-    [p.Rook2, p.Knight2, p.Bishop2, p.Queen2, p.King2, p.Bishop2, p.Knight2, p.Rook2],
+export const startPosition = {
+    board: [[p.Rook2, p.Knight2, p.Bishop2, p.Queen2, p.King2, p.Bishop2, p.Knight2, p.Rook2],
     [p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2],
     [null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null, null],
     [p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn],
-    [p.Rook, p.Knight, p.Bishop, p.Queen, p.King, p.Bishop, p.Knight, p.Rook]
-]
+    [p.Rook, p.Knight, p.Bishop, p.Queen, p.King, p.Bishop, p.Knight, p.Rook]],
+    toMove: 'w',
+    castleRights: {
+        'w': {
+            kingSide: true,
+            queenSide: true
+        },
+        'b': {
+            kingSide: true,
+            queenSide: true
+        }
+    }
+}
 
 export const notation = [
     ['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'],
@@ -55,13 +66,14 @@ export const coordsToNotation = (coord) => {
 export const boardDefaultProps = {
     lightColor: 'rgb(240, 200, 200)',
     darkColor: 'rgb(70, 20, 20)',
+    highlightColor: 'rgb(70, 70, 200)',
+    validHighlightColorLight: 'rgb(240, 240, 0)',
+    validHighlightColorDark: 'rgb(150, 150, 0)',
     squareSize: 100,
     left: '50px',
     top: '50px',
-    highlightColor: 'rgb(70, 70, 200)',
-    validHighlightColor: 'rgb(255, 255, 0)',
     validHighlighted: [],
-    pieces: startPieces
+    pieces: startPosition
 }
 
 export const tileDefaultProps = {
