@@ -60,18 +60,32 @@ export default class Game {
                 this.setPiece(f, null, board)
                 this.setPiece(t, piece, board)
 
+                let backRow = (piece.color == 'w') ? 7 : 0
+
+                if (f.row == backRow) {
+                    if (f.col == 7) {
+                        this.position.castleRights[piece.color].kingSide = false
+                    } else if (f.col == 0) {
+                        this.position.castleRights[piece.color].queenSide = false
+                    } else if (f.col == 4) {
+                        this.position.castleRights[piece.color].kingSide = false
+                        this.position.castleRights[piece.color].queenSide = false
+                    }
+                }
+
+
                 if (canMove.special != null) {
                     switch (canMove.special.type) {
                         case 'castle_king':
-                            f = { row: (canMove.special.color == 'w') ? 7 : 0, col: 7 }
-                            t = { row: (canMove.special.color == 'w') ? 7 : 0, col: 5 }
+                            f = { row: backRow, col: 7 }
+                            t = { row: backRow, col: 5 }
                             piece = this.pieceAt(f, board)
                             this.setPiece(f, null, board)
                             this.setPiece(t, piece, board)
                             break;
                         case 'castle_queen':
-                            f = { row: (canMove.special.color == 'w') ? 7 : 0, col: 0 }
-                            t = { row: (canMove.special.color == 'w') ? 7 : 0, col: 3 }
+                            f = { row: backRow, col: 0 }
+                            t = { row: backRow, col: 3 }
                             piece = this.pieceAt(f, board)
                             this.setPiece(f, null, board)
                             this.setPiece(t, piece, board)
