@@ -5,7 +5,12 @@ export default class Game {
 
     constructor() {
         this.position = startPosition
-        this.history = [startPosition.board]
+        this.history = [startPosition]
+
+        this.kingPositions = {
+            'w': { row: 7, col: 4 },
+            'b': { row: 0, col: 4 }
+        }
 
         this.canMove = this.canMove.bind(this)
         this.pieceAt = this.pieceAt.bind(this)
@@ -40,7 +45,12 @@ export default class Game {
         position.toMove = (position.toMove == 'w') ? 'b' : 'w'
     }
 
-    move(fromSquare, toSquare, board = this.getBoard()) {
+    enPassantSquare(position = this.position) {
+        return position.enPassantSquare
+    }
+
+    move(fromSquare, toSquare, position = this.position) {
+        let board = this.getBoard(position)
         let f = fromSquare
         if (typeof f == 'string') {
             f = this.notationToCoords(fromSquare)
@@ -52,7 +62,10 @@ export default class Game {
 
         if (this.playerNextMove() == this.pieceAt(f, board).color) {
 
-            let canMove = this.canMove(f, t, board)
+            let canMove = this.canMove(f, t, position)
+
+            position.enPassantSquare = null
+
             if (canMove.valid) {
                 this.toggleActivePlayer()
 
@@ -75,30 +88,56 @@ export default class Game {
 
 
                 if (canMove.special != null) {
+                    let rookFrom
+                    let rookTo
+                    let rookPiece
+                    let pawnForward = (piece.color == 'w') ? -1 : 1
                     switch (canMove.special.type) {
                         case 'castle_king':
-                            f = { row: backRow, col: 7 }
-                            t = { row: backRow, col: 5 }
-                            piece = this.pieceAt(f, board)
-                            this.setPiece(f, null, board)
-                            this.setPiece(t, piece, board)
+                            rookFrom = { row: backRow, col: 7 }
+                            rookTo = { row: backRow, col: 5 }
+                            rookPiece = this.pieceAt(rookFrom, board)
+                            this.setPiece(rookFrom, null, board)
+                            this.setPiece(rookTo, rookPiece, board)
                             break;
                         case 'castle_queen':
-                            f = { row: backRow, col: 0 }
-                            t = { row: backRow, col: 3 }
-                            piece = this.pieceAt(f, board)
-                            this.setPiece(f, null, board)
-                            this.setPiece(t, piece, board)
+                            rookFrom = { row: backRow, col: 0 }
+                            rookTo = { row: backRow, col: 3 }
+                            rookPiece = this.pieceAt(rookFrom, board)
+                            this.setPiece(rookFrom, null, board)
+                            this.setPiece(rookTo, rookPiece, board)
                             break;
+                        case 'pawn_twosquare':
+                            position.enPassantSquare = {
+                                row: t.row - (1 * pawnForward),
+                                col: t.col,
+                                color: piece.color
+                            }
+                            break;
+                        case 'en_passant':
+                            this.setPiece({row: t.row - (1 * pawnForward), col: t.col}, null)
                     }
                 }
 
-                this.history.push(board)
+                if (piece == PieceData.King) {
+                    this.kingPositions['w'] = t
+                }
+                if (piece == PieceData.King2) {
+                    this.kingPositions['b'] = t
+                }
+
+                this.history.push({
+                    //create new position w/ deep copy... maybe save as FEN notation?
+                })
+
+                // this.inCheckValidate('w', position)
             }
         }
     }
 
-    canMove(fromSquare, toSquare, board = this.getBoard()) {
+    canMove(fromSquare, toSquare, position = this.position) {
+        let board = this.getBoard(position)
+
         let f = fromSquare
         if (typeof f == 'string') {
             f.this.notationToCoords(f)
@@ -121,7 +160,8 @@ export default class Game {
     /**
      * Returns array of squares that represent valid for the given square.
      */
-    validMoves(fromSquare, board = this.getBoard(), inAlgebraicNotation = true) {
+    validMoves(fromSquare, position = this.position, inAlgebraicNotation = true) {
+        let board = this.getBoard(position)
 
         let f = fromSquare
         if (typeof f == 'string') {
@@ -132,28 +172,28 @@ export default class Game {
         switch (this.pieceAt(f, board)) {
             case PieceData.Pawn:
             case PieceData.Pawn2:
-                moves = this.pawnValidate(f, board)
+                moves = this.pawnValidate(f, position)
                 break;
             case PieceData.Knight:
             case PieceData.Knight2:
-                moves = this.knightValidate(f, board)
+                moves = this.knightValidate(f, position)
                 break;
             case PieceData.Bishop:
             case PieceData.Bishop2:
-                moves = this.bishopValidate(f, board)
+                moves = this.bishopValidate(f, position)
                 break;
             case PieceData.Rook:
             case PieceData.Rook2:
-                moves = this.rookValidate(f, board)
+                moves = this.rookValidate(f, position)
                 break;
             case PieceData.Queen:
             case PieceData.Queen2:
-                moves = this.bishopValidate(f, board)
-                moves = moves.concat(this.rookValidate(f, board))
+                moves = this.bishopValidate(f, position)
+                moves = moves.concat(this.rookValidate(f, position))
                 break;
             case PieceData.King:
             case PieceData.King2:
-                moves = this.kingValidate(f, board)
+                moves = this.kingValidate(f, position)
                 break;
             default:
                 ConsoleLog("Piece does not match in Game.validateMove.")
@@ -167,10 +207,10 @@ export default class Game {
         return moves
     }
 
-    pawnValidate(fromCoord, board) {
+    pawnValidate(fromCoord, position = this.position) {
         let p = this.pieceAt
         let f = fromCoord
-        let b = board
+        let b = this.getBoard(position)
         let moves = []
         let temp = {}
 
@@ -183,7 +223,11 @@ export default class Game {
 
             //Move 2 squares
             if (f.row == parseInt(3.5 - (2.5 * forward))) {
-                temp = { row: f.row + (2 * forward), col: f.col }
+                temp = {
+                    row: f.row + (2 * forward), col: f.col, special: {
+                        color: p(f, b).color, type: "pawn_twosquare"
+                    }
+                }
                 if (p(temp, b) === null) {
                     moves.push(temp)
                 }
@@ -206,13 +250,27 @@ export default class Game {
             }
         }
 
-        //En passant
-        //TODO
+        //En Passant
+        let enPassantSquare = this.enPassantSquare(this.position)
+
+        if (enPassantSquare != null) {
+            if (enPassantSquare.row == f.row + (1 * forward) &&
+                enPassantSquare.color != p(f, b).color && (
+                    enPassantSquare.col == f.col - 1 ||
+                    enPassantSquare.col == f.col + 1)) {
+                moves.push({
+                    row: enPassantSquare.row, col: enPassantSquare.col, special: {
+                        color: p(f, b).color, type: "en_passant"
+                    }
+                })
+            }
+        }
         return moves
     }
 
-    knightValidate(fromCoord, board) {
+    knightValidate(fromCoord, position) {
         let p = this.pieceAt
+        let board = this.getBoard(position)
         let f = fromCoord
         let moves = []
 
@@ -239,7 +297,8 @@ export default class Game {
         return moves
     }
 
-    bishopValidate(fromCoord, board) {
+    bishopValidate(fromCoord, position) {
+        let board = this.getBoard(position)
         let moves = []
         moves = moves.concat(this.lineValidate(-1, 1, fromCoord, board))
         moves = moves.concat(this.lineValidate(-1, -1, fromCoord, board))
@@ -248,7 +307,8 @@ export default class Game {
         return moves
     }
 
-    rookValidate(fromCoord, board) {
+    rookValidate(fromCoord, position) {
+        let board = this.getBoard(position)
         let moves = []
         moves = moves.concat(this.lineValidate(0, 1, fromCoord, board))
         moves = moves.concat(this.lineValidate(0, -1, fromCoord, board))
@@ -256,17 +316,19 @@ export default class Game {
         moves = moves.concat(this.lineValidate(-1, 0, fromCoord, board))
         return moves
     }
-    queenValidate(fromCoord, board) {
+    queenValidate(fromCoord, position) {
+        let board = this.getBoard(position)
         let moves = []
         moves = moves.concat(this.bishopValidate(fromCoord, board))
         moves = moves.concat(this.rookValidate(fromCoord, board))
         return moves
     }
 
-    kingValidate(fromCoord, board) {
-        let p = this.pieceAt
-        let f = fromCoord
+    kingValidate(fromCoord, position) {
         let moves = []
+        let p = this.pieceAt
+        let board = this.getBoard(position)
+        let f = fromCoord
 
         let adjacent = [
             { row: f.row + 1, col: f.col },
@@ -294,13 +356,13 @@ export default class Game {
 
     castlingValidate(color, position = this.position) {
         let castleRights = position.castleRights[color]
-
+        let board = this.getBoard(position)
         let backRow = (color == 'w') ? 7 : 0
         let castleMoves = []
         //TODO: Prevent Castling Out of Check or Through Check
         if (castleRights.kingSide &&
-            this.pieceAt({ row: backRow, col: 5 }) == null &&
-            this.pieceAt({ row: backRow, col: 6 }) == null) {
+            this.pieceAt({ row: backRow, col: 5 }, board) == null &&
+            this.pieceAt({ row: backRow, col: 6 }, board) == null) {
             castleMoves.push({
                 row: backRow, col: 6, special: {
                     color: color, type: "castle_king"
@@ -329,18 +391,17 @@ export default class Game {
      */
     lineValidate(v, h, fromCoord, board) {
         let p = this.pieceAt
-        let b = board
         let f = fromCoord
         let moves = []
         let temp = {}
 
         temp = { row: f.row + h, col: f.col + v }
         while (temp.row >= 0 && temp.row < 8 && temp.col >= 0 && temp.col < 8) {
-            if (p(temp, b) == null) {
+            if (p(temp, board) == null) {
                 moves.push(temp)
                 temp = { row: temp.row + h, col: temp.col + v }
                 continue
-            } else if (p(temp, b).color != p(f, b).color) {
+            } else if (p(temp, board).color != p(f, board).color) {
                 moves.push(temp)
                 break
             } else {
@@ -348,6 +409,28 @@ export default class Game {
             }
         }
         return moves
+    }
+
+    // Refactor to keep track of all pieces throughout game to allow for more efficient
+    // check checks
+    inCheckValidate(defendingKingCoord, kingColor, position = this.position) {
+        let board = this.getBoard(position)
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                let attackPiece = this.pieceAt({ row: row, col: col }, board)
+                if (attackPiece != null && attackPiece.color != kingColor) {
+                    let pieceMoves = this.validMoves({ row: row, col: col }, position, false)
+                    let isInCheck = pieceMoves.some(move => {
+                        return move.row == defendingKingCoord.row &&
+                            move.col == defendingKingCoord.col
+                    });
+                    if (isInCheck) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
     }
 
     /**

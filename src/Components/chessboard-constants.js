@@ -32,6 +32,7 @@ export const startPosition = {
     [p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn],
     [p.Rook, p.Knight, p.Bishop, p.Queen, p.King, p.Bishop, p.Knight, p.Rook]],
     toMove: 'w',
+    enPassantSquare: null,
     castleRights: {
         'w': {
             kingSide: true,
