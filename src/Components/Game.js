@@ -64,9 +64,11 @@ export default class Game {
 
             let canMove = this.canMove(f, t, position)
 
-            position.enPassantSquare = null
 
             if (canMove.valid) {
+
+                position.enPassantSquare = null
+
                 this.toggleActivePlayer()
 
                 let piece = this.pieceAt(f, board)
@@ -115,7 +117,7 @@ export default class Game {
                             }
                             break;
                         case 'en_passant':
-                            this.setPiece({row: t.row - (1 * pawnForward), col: t.col}, null)
+                            this.setPiece({ row: t.row - (1 * pawnForward), col: t.col }, null)
                     }
                 }
 
