@@ -1,7 +1,5 @@
 import React from 'react'
 
-import ConsoleLog from '../util/ConsoleLog'
-
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
@@ -10,12 +8,13 @@ import { boardDefaultProps, ChessContext, coordsToNotation } from './chessboard-
 
 import Piece from "./Piece"
 import Tile from './Tile'
+import PromotionSelector from './PromotionSelector'
 
 class ChessBoard extends React.Component {
 
     static contextType = ChessContext
 
-    constructor(props, context) {
+    constructor(props) {
         super(props);
 
         this.state = {
@@ -52,23 +51,37 @@ class ChessBoard extends React.Component {
     }
 
     render() {
+        let game = this.context.game
+
+        let boardRender = (
+            <div id="chessboard"
+                onDragOver={(e) => this.onDragOver(e)}
+                ref={(node) => this.node = node}
+                style={
+                    {
+                        'left': this.state.left,
+                        'top': this.state.top,
+                        'width': this.state.boardSize[0],
+                        'height': this.state.boardSize[1]
+                    }
+                }>
+                {this.createTiles(game.getBoard())}
+            </div>
+        )
+
         return (
             <DndProvider backend={HTML5Backend} >
-                <div id="chessboard"
-                    onDragOver={(e) => this.onDragOver(e)}
-                    ref={(node) => this.node = node}
-                    style={
-                        {
-                            'left': this.state.left,
-                            'top': this.state.top,
-                            'width': this.state.boardSize[0],
-                            'height': this.state.boardSize[1]
-                        }
-                    }>
-                    {this.createTiles(this.context.game.getBoard())}
-                </div>
+                {boardRender}
+                {(game.promotionSquare != null) ?
+                    <PromotionSelector
+                        color={game.pieceAt(game.promotionSquare).color}
+                        callback={(type) => {
+                            game.promote(game.promotionSquare, type, game.position)
+                            this.forceUpdate()
+                        }} />
+                    : null}
             </DndProvider>
-        );
+        )
     }
 
     createTiles(pieces) {
@@ -97,7 +110,7 @@ class ChessBoard extends React.Component {
                 }
 
                 let currentColor
-                if (this.state.highlighted == notation) {
+                if (this.state.highlighted === notation) {
                     currentColor = this.state.highlightColor
                 } else if (this.state.validHighlighted.includes(notation)) {
                     currentColor = this.state.validHighlightColors[colorParity % 2]
@@ -144,7 +157,7 @@ class ChessBoard extends React.Component {
             // If square is already highlighted
         } else {
             //If user is clicking the same square
-            if (this.state.highlighted != notation) {
+            if (this.state.highlighted !== notation) {
                 this.movePiece(this.state.highlighted, notation)
             }
             this.setState({

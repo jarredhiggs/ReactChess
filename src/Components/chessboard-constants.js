@@ -6,31 +6,55 @@ import {
 
 export const ChessContext = React.createContext('context');
 
-export const PieceData = {
-    Pawn: { icon: pawn, color: 'w' },
-    Pawn2: { icon: pawn2, color: 'b' },
-    Knight: { icon: knight, color: 'w' },
-    Knight2: { icon: knight2, color: 'b' },
-    Bishop: { icon: bishop, color: 'w' },
-    Bishop2: { icon: bishop2, color: 'b' },
-    Rook: { icon: rook, color: 'w' },
-    Rook2: { icon: rook2, color: 'b' },
-    Queen: { icon: queen, color: 'w' },
-    Queen2: { icon: queen2, color: 'b' },
-    King: { icon: king, color: 'w' },
-    King2: { icon: king2, color: 'b' }
+// Add others as needed
+export const Icons = {
+    queen: queen,
+    queen2: queen2,
+    bishop: bishop,
+    bishop2: bishop2,
+    rook: rook,
+    rook2: rook2,
+    knight: knight,
+    knight2: knight2
 }
 
-const p = PieceData
+const Piece = (type, icon, color) => {
+    return {
+        type: type,
+        icon: icon,
+        color: color
+    }
+}
+
+let Pieces = {
+    pawn_w: Piece("pawn", pawn, 'w'),
+    knight_w: Piece("knight", knight, 'w'),
+    bishop_w: Piece("bishop", bishop, 'w'),
+    rook_w: Piece("rook", rook, 'w'),
+    queen_w: Piece("queen", queen, 'w'),
+    king_w: Piece("king", king, 'w'),
+
+    pawn_b: Piece("pawn", pawn2, 'b'),
+    knight_b: Piece("knight", knight2, 'b'),
+    bishop_b: Piece("bishop", bishop2, 'b'),
+    rook_b: Piece("rook", rook2, 'b'),
+    queen_b: Piece("queen", queen2, 'b'),
+    king_b: Piece("king", king2, 'b')
+}
+
+const p = Pieces
+
 export const startPosition = {
-    board: [[p.Rook2, p.Knight2, p.Bishop2, p.Queen2, p.King2, p.Bishop2, p.Knight2, p.Rook2],
-    [p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2, p.Pawn2],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn, p.Pawn],
-    [p.Rook, p.Knight, p.Bishop, p.Queen, p.King, p.Bishop, p.Knight, p.Rook]],
+    board: [
+        [p.rook_b, p.knight_b, p.bishop_b, p.queen_b, p.king_b, p.bishop_b, p.knight_b, p.rook_b],
+        [p.pawn_b, p.pawn_b, p.pawn_b, p.pawn_b, p.pawn_b, p.pawn_b, p.pawn_b, p.pawn_b],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [p.pawn_w, p.pawn_w, p.pawn_w, p.pawn_w, p.pawn_w, p.pawn_w, p.pawn_w, p.pawn_w],
+        [p.rook_w, p.knight_w, p.bishop_w, p.queen_w, p.king_w, p.bishop_w, p.knight_w, p.rook_w]
+    ],
     toMove: 'w',
     enPassantSquare: null,
     castleRights: {
