@@ -61,6 +61,7 @@ export default class Game {
         }, board)
 
         this.promotionSquare = null
+        this.updateGameStatus(position)
     }
 
     move(fromSquare, toSquare, position = this.position) {
@@ -244,7 +245,7 @@ export default class Game {
                 this.setPiece(move, piece, this.getBoard(positionCopy))
                 this.setPiece(f, null, this.getBoard(positionCopy))
 
-                if (piece.type == "king") {
+                if (piece.type === "king") {
                     kingPosition = move
                 }
 
@@ -497,6 +498,11 @@ export default class Game {
     }
 
     updateGameStatus(position) {
+        // Do not check game status while a pawn is on back rank
+        if(this.promotionSquare !== null) {
+            return 
+        }
+
         let board = position.board
 
         for (let row = 0; row < 8; row++) {
@@ -516,7 +522,7 @@ export default class Game {
         if (this.inCheckValidate(
             this.kingPositions[this.playerToMove()],
             this.playerToMove, position)) {
-            this.winner = (this.playerToMove() == 'w') ? 'b' : 'w'
+            this.winner = (this.playerToMove() === 'w') ? 'b' : 'w'
             console.log(`CHECKMATE. WINNER : ${this.winner}`)
         } else {
             console.log("STALEMATE")

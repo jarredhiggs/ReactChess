@@ -69,6 +69,7 @@ class ChessBoard extends React.Component {
                             this.forceUpdate()
                         }} />
                     : null}
+                {this.props.children}
             </DndProvider>
         )
     }
