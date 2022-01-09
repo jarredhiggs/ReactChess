@@ -8,9 +8,12 @@ const PromotionSelector = (props) => {
     return (
         <div style={{
             position: "absolute",
-            left: props.left ?? 255,
-            top: props.top ?? 400,
-            backgroundColor: isW ? "black" : "white"
+            left: props.left ?? 240,
+            top: props.top ?? 385,
+            backgroundColor: isW ? "black" : "white",
+            padding: "10px 10px 0px 10px",
+            border: "5px solid",
+            borderColor: isW? "white" : "black"
         }}>
             <div>
                 <img alt="" src={isW ? Icons.queen : Icons.queen2}

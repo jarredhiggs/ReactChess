@@ -15,6 +15,9 @@ export default class Game {
         this.pieceAt = this.pieceAt.bind(this)
 
         this.promotionSquare = null
+
+        this.winner = null
+        this.stalemate = false
     }
 
     getBoard(position = this.position) {
@@ -35,9 +38,6 @@ export default class Game {
         board[coord.row][coord.col] = value
     }
 
-    /**
-     * Returns current player's turn. 0 -> white, 1 -> black
-     */
     playerToMove(position = this.position) {
         return position.toMove
     }
@@ -65,7 +65,9 @@ export default class Game {
 
     move(fromSquare, toSquare, position = this.position) {
 
-        if (this.promotionSquare !== null) {
+        if (this.promotionSquare !== null ||
+            this.winner !== null ||
+            this.stalemate !== false) {
             return
         }
 
@@ -87,7 +89,7 @@ export default class Game {
 
                 position.enPassantSquare = null
 
-                this.toggleActivePlayer()
+                this.toggleActivePlayer(position)
 
                 let piece = this.pieceAt(f, board)
                 this.setPiece(f, null, board)
@@ -106,7 +108,6 @@ export default class Game {
                     }
                 }
 
-                // TODO: Identify why special is sometimes undefined rather than null
                 if (canMove.special !== null) {
                     let rookFrom
                     let rookTo
@@ -154,14 +155,12 @@ export default class Game {
                     //create new position w/ deep copy... maybe save as FEN notation?
                 })
 
-                // this.inCheckValidate('w', position)
+                this.updateGameStatus(position)
             }
         }
     }
 
     canMove(fromSquare, toSquare, position = this.position) {
-        let board = this.getBoard(position)
-
         let f = fromSquare
         if (typeof f === 'string') {
             f.this.notationToCoords(f)
@@ -173,9 +172,9 @@ export default class Game {
 
         let special = null
         return {
-            valid: this.validMoves(f, board, false).some(move => {
+            valid: this.validMoves(f, position, false, false).some(move => {
                 special = move.special
-                return move.row === t.row && move.col === t.col
+                return (move.row === t.row) && (move.col === t.col)
             }),
             special: special || null
         }
@@ -184,7 +183,13 @@ export default class Game {
     /**
      * Returns array of squares that represent valid for the given square.
      */
-    validMoves(fromSquare, position = this.position, inAlgebraicNotation = true) {
+    validMoves(fromSquare, position = this.position, inAlgebraicNotation = true,
+        validatingChecks = false) {
+
+        if (this.winner !== null || this.stalemate) {
+            return
+        }
+
         let board = this.getBoard(position)
 
         let f = fromSquare
@@ -218,11 +223,43 @@ export default class Game {
                 console.log("Piece does not match in Game.validateMove.")
         }
 
+        if (!validatingChecks) {
+            moves = moves.filter((move) => {
+                let kingPosition = this.kingPositions[piece.color]
+                if (move.special != null) {
+                    if (move.special.type === "castle_king" &&
+                        (this.inCheckValidate(kingPosition, piece.color, position)) ||
+                        (this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col + 1 }, piece.color, position))) {
+                        return false
+
+                    } else if (move.special.type === "castle_queen" &&
+                        (this.inCheckValidate(kingPosition, piece.color, position)) ||
+                        (this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col - 1 }, piece.color, position))) {
+                        return false
+                    }
+                }
+
+                let positionCopy = JSON.parse(JSON.stringify(position))
+
+                this.setPiece(move, piece, this.getBoard(positionCopy))
+                this.setPiece(f, null, this.getBoard(positionCopy))
+
+                if (piece.type == "king") {
+                    kingPosition = move
+                }
+
+                return !this.inCheckValidate(
+                    kingPosition, piece.color, positionCopy
+                )
+            })
+        }
+
         if (inAlgebraicNotation) {
             for (let i = 0; i < moves.length; i++) {
                 moves[i] = coordsToNotation(moves[i])
             }
         }
+
         return moves
     }
 
@@ -385,7 +422,7 @@ export default class Game {
         let board = this.getBoard(position)
         let backRow = (color === 'w') ? 7 : 0
         let castleMoves = []
-        //TODO: Prevent Castling Out of Check or Through Check
+
         if (castleRights.kingSide &&
             this.pieceAt({ row: backRow, col: 5 }, board) === null &&
             this.pieceAt({ row: backRow, col: 6 }, board) === null) {
@@ -395,7 +432,8 @@ export default class Game {
                 }
             })
         }
-        if (castleRights.queenSide && this.pieceAt({ row: backRow, col: 3 }) === null &&
+        if (castleRights.queenSide &&
+            this.pieceAt({ row: backRow, col: 3 }) === null &&
             this.pieceAt({ row: backRow, col: 2 }) === null &&
             this.pieceAt({ row: backRow, col: 1 }) === null) {
             castleMoves.push({
@@ -437,15 +475,14 @@ export default class Game {
         return moves
     }
 
-    // Refactor to keep track of all pieces throughout game to allow for more efficient
-    // check checks
+    // Refactor to keep track of all pieces throughout game to allow for more efficient check checks
     inCheckValidate(defendingKingCoord, kingColor, position = this.position) {
         let board = this.getBoard(position)
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 let attackPiece = this.pieceAt({ row: row, col: col }, board)
                 if (attackPiece !== null && attackPiece.color !== kingColor) {
-                    let pieceMoves = this.validMoves({ row: row, col: col }, position, false)
+                    let pieceMoves = this.validMoves({ row: row, col: col }, position, false, true)
                     let isInCheck = pieceMoves.some(move => {
                         return move.row === defendingKingCoord.row &&
                             move.col === defendingKingCoord.col
@@ -457,6 +494,34 @@ export default class Game {
             }
         }
         return false
+    }
+
+    updateGameStatus(position) {
+        let board = position.board
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+
+                let coord = { row: row, col: col }
+                let piece = this.pieceAt(coord, board)
+
+                if (piece !== null && piece.color === this.playerToMove()) {
+                    if (this.validMoves(coord, position, false, false).length > 0) {
+                        return
+                    }
+                }
+            }
+        }
+
+        if (this.inCheckValidate(
+            this.kingPositions[this.playerToMove()],
+            this.playerToMove, position)) {
+            this.winner = (this.playerToMove() == 'w') ? 'b' : 'w'
+            console.log(`CHECKMATE. WINNER : ${this.winner}`)
+        } else {
+            console.log("STALEMATE")
+            this.stalemate = true
+        }
     }
 
     /**

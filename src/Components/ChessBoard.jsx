@@ -38,16 +38,6 @@ class ChessBoard extends React.Component {
 
     componentDidMount() {
         this.createTiles(this.context.game.getBoard())
-
-        document.addEventListener("contextmenu", (event) => {
-            if (this.node.contains(event.target)) {
-                event.preventDefault();
-            }
-        });
-    }
-
-    onDragOver(e) {
-        e.preventDefault();
     }
 
     render() {
@@ -55,7 +45,6 @@ class ChessBoard extends React.Component {
 
         let boardRender = (
             <div id="chessboard"
-                onDragOver={(e) => this.onDragOver(e)}
                 ref={(node) => this.node = node}
                 style={
                     {
@@ -151,7 +140,7 @@ class ChessBoard extends React.Component {
             //Sets highlighted square and re-render
             this.setState({
                 highlighted: notation,
-                validHighlighted: this.context.game.validMoves(notation)
+                validHighlighted: this.context.game.validMoves(notation) ?? []
             })
 
             // If square is already highlighted
