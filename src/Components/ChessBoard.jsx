@@ -9,6 +9,7 @@ import { boardDefaultProps, ChessContext, coordsToNotation } from './chessboard-
 import Piece from "./Piece"
 import Tile from './Tile'
 import PromotionSelector from './PromotionSelector'
+import ResultsWindow from './ResultsWindow'
 
 class ChessBoard extends React.Component {
 
@@ -61,13 +62,21 @@ class ChessBoard extends React.Component {
         return (
             <DndProvider backend={HTML5Backend} >
                 {boardRender}
-                {(game.promotionSquare != null) ?
+
+                {(game.promotionSquare !== null) ?
                     <PromotionSelector
                         color={game.pieceAt(game.promotionSquare).color}
                         callback={(type) => {
                             game.promote(game.promotionSquare, type, game.position)
                             this.forceUpdate()
                         }} />
+                    : null}
+
+                {(game.winner !== null || game.stalemate) ?
+                    <ResultsWindow
+                        winner={game.winner}
+                        stalemate={game.stalemate}
+                    />
                     : null}
                 {this.props.children}
             </DndProvider>

@@ -6,7 +6,6 @@ import {
 
 export const ChessContext = React.createContext('context');
 
-// Add others as needed
 export const Icons = {
     queen: queen,
     queen2: queen2,
@@ -15,7 +14,9 @@ export const Icons = {
     rook: rook,
     rook2: rook2,
     knight: knight,
-    knight2: knight2
+    knight2: knight2,
+    king: king,
+    king2: king2
 }
 
 const Piece = (type, icon, color) => {
