@@ -17,18 +17,25 @@ const ResultsWindow = (props) => {
             border: "5px solid",
             borderColor: isW ? "white" : "black"
         }}>
-            {!isStalemate ? (<div className="winnerWindow">
-                GG
-                <img src={isW ? Icons["king"] : Icons["king2"]}></img>
-                EZ
-                <div>
-                    {isW ? "1-0" : "0-1"}
-                </div>
-            </div>) : (<div className="drawWindow">
-                <img src={Icons.king}></img>
-                <img src={Icons.king2}></img>
-                <div>&nbsp;&nbsp;DRAW&nbsp;&nbsp;</div>
-            </div>)}
+            {!isStalemate ?
+
+                (<div className="winnerWindow">
+                    GG
+                    <img src={isW ? Icons["king"] : Icons["king2"]}></img>
+                    EZ
+                    <div>
+                        {isW ? "1-0" : "0-1"}
+                    </div>
+                </div>)
+
+                :
+
+                (<div className="drawWindow">
+                    <img src={Icons.king}></img>
+                    <img src={Icons.king2}></img>
+                    <div>&nbsp;&nbsp;DRAW&nbsp;&nbsp;</div>
+                </div>)}
+
         </div>
     )
 }

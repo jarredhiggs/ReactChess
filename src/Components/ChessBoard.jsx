@@ -35,10 +35,16 @@ class ChessBoard extends React.Component {
         };
 
         this.handleTileInteract = this.handleTileInteract.bind(this)
+        this.navigateHistory = this.navigateHistory.bind(this)
     }
 
     componentDidMount() {
         this.createTiles(this.context.game.getBoard())
+        document.addEventListener("keydown", this.navigateHistory, false)
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.navigateHistory, false)
     }
 
     render() {
@@ -163,6 +169,20 @@ class ChessBoard extends React.Component {
                 highlighted: null,
                 validHighlighted: []
             })
+        }
+    }
+
+    navigateHistory(keyEvent) {
+        switch (keyEvent.key) {
+            case "ArrowLeft":
+                console.log("left")
+                break
+            case "ArrowRight":
+                console.log("right")
+                break
+            default:
+                console.log(keyEvent.key)
+                break
         }
     }
 

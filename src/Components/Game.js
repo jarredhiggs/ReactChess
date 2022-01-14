@@ -229,13 +229,13 @@ export default class Game {
                 let kingPosition = this.kingPositions[piece.color]
                 if (move.special != null) {
                     if (move.special.type === "castle_king" &&
-                        (this.inCheckValidate(kingPosition, piece.color, position)) ||
-                        (this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col + 1 }, piece.color, position))) {
+                        (this.inCheckValidate(kingPosition, piece.color, position) ||
+                            this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col + 1 }, piece.color, position))) {
                         return false
 
                     } else if (move.special.type === "castle_queen" &&
-                        (this.inCheckValidate(kingPosition, piece.color, position)) ||
-                        (this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col - 1 }, piece.color, position))) {
+                        (this.inCheckValidate(kingPosition, piece.color, position) ||
+                            this.inCheckValidate({ row: kingPosition.row, col: kingPosition.col - 1 }, piece.color, position))) {
                         return false
                     }
                 }
@@ -499,8 +499,8 @@ export default class Game {
 
     updateGameStatus(position) {
         // Do not check game status while a pawn is on back rank
-        if(this.promotionSquare !== null) {
-            return 
+        if (this.promotionSquare !== null) {
+            return
         }
 
         let board = position.board
