@@ -11,3 +11,10 @@ This app is designed to be modular and can be inserted into other React apps as 
 
 Runs the app in development mode.
 Default port: 3000
+
+----
+
+### TODO
+- Game clock with time control options
+- System to dynamically load [custom pieces](https://en.wikipedia.org/wiki/Fairy_chess_piece)
+- Allow user to create and load custom rule sets
